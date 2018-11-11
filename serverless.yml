@@ -1,0 +1,94 @@
+service: BookSystem
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+#custom:
+#  topicArn:
+#    Fn::Join:
+#      - ''
+#      - - 'arn:aws:sns:'
+#        - ${file(./config.yml):aws.region}
+#        - ":"
+#        - ${file(./config.yml):aws.account_id}
+#        - ":"
+#        - Fn::GetAtt:
+#          - MyCustomTopic
+#          - TopicName
+provider:
+  name: aws
+  runtime: python3.6
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${self:custom.confFile.${self:provider.stage}.aws.region}
+  memorySize: 128
+#  profile: ${self:custom.profiles.${self:provider.stage}}
+custom:
+  defaultStage: dev
+  #profiles:
+    #dev: foo
+    #prd: bar
+  confFile:
+    dev: ${file(./conf/dev.yml)}
+    prd: ${file(./conf/prd.yml)}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "*"
+      Resource:
+        - "*"
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.py
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.py
+#    - exclude-me-dir/**
+functions:
+  Reantal:
+    handler: BookRental.Main
+    timeout: ${self:custom.confFile.${self:provider.stage}.BookRental.timeout}
+    tags: ${self:custom.confFile.${self:provider.stage}.BookRetal.tags}
+    events:
+      - http:
+          path: books/rental
+          method: post
+resources:
+  Resources:
+    BooksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+          -
+            AttributeName: name
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+          -
+            AttributeName: name
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.confFile.${self:provider.stage}.DynamoDB.tablename}

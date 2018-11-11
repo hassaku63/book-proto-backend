@@ -1,0 +1,8 @@
+aws:
+  region: "ap-northeast-1"
+BookRental:
+  timeout: 300
+  tags:
+    stage: "dev"
+DynamoDB:
+  tablename: "BooksTable"
